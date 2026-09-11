@@ -14,7 +14,7 @@
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, NamedTuple, TypeAlias
+from typing import Any, ClassVar, NamedTuple, TYPE_CHECKING, TypeAlias
 
 import spmd_types as spmd
 import torch
@@ -48,6 +48,9 @@ from torchtitan.models.common.nn_modules import RMSNorm
 from torchtitan.models.common.rope import RoPE
 from torchtitan.protocols.module import Module
 from torchtitan.tools.utils import round_up
+
+if TYPE_CHECKING:
+    from torchtitan.models.kimi_k3.kda import KDAAttentionMetadata
 
 
 __all__ = [
@@ -154,7 +157,7 @@ class InnerAttention(Module):
         padding_mask: torch.Tensor | None = None,
         max_num_documents: int | None = None,
         max_context_length: int | None = None,
-    ) -> "FlexAttentionMetadata | VarlenAttentionMetadata | None":
+    ) -> "FlexAttentionMetadata | VarlenAttentionMetadata | KDAAttentionMetadata | None":
         """Build metadata consumed by this inner attention, if any.
 
         Inner attentions that do not require metadata inherit the default
