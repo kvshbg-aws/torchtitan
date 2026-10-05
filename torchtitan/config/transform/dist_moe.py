@@ -23,6 +23,7 @@ from torchtitan.models.common.token_dispatcher import AllToAllTokenDispatcher
 from torchtitan.protocols.module import Module
 from .base import ModelConfigTransform, ModelConfigTransformContext
 from .lora import LoRATransform
+from .relations import TransformRelations
 from .token_dispatcher import TokenDispatcherTransform
 
 
@@ -78,6 +79,9 @@ def _replace_routed_experts(
 class DistMoeTransform(ModelConfigTransform):
     """Replace stock routed experts with BF16 or MXFP8 Dist-MoE execution.
 
+    This transform contributes its conflicts when selected because importing
+    it in the central relation graph would make ``dist_moe`` a required package.
+
     Args:
         expert_precision: Expert compute precision. BF16 is the high-precision
             default; MXFP8 selects the annex's asynchronous block-scaled path.
@@ -95,6 +99,12 @@ class DistMoeTransform(ModelConfigTransform):
     inplace_wgrad_accum: bool = True
     bf16_grouped_gemm_preset: dist_moe.Bf16GroupedGemmPreset | None = None
     block_scaled_config: dist_moe.BlockScaledConfig | None = None
+
+    @classmethod
+    def contribute_relations(cls, relations: TransformRelations) -> None:
+        """Add conflicts whose execution Dist-MoE replaces or bypasses."""
+        relations.add_conflict(cls, LoRATransform)
+        relations.add_conflict(cls, TokenDispatcherTransform)
 
     def __post_init__(self) -> None:
         if self.expert_precision == "bf16":
@@ -139,6 +149,3 @@ class DistMoeTransform(ModelConfigTransform):
                 self.block_scaled_config or dist_moe.BlockScaledConfig()
             ),
         )
-
-
-DistMoeTransform.conflicts_with = (LoRATransform, TokenDispatcherTransform)

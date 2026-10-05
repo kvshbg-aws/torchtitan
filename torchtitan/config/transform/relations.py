@@ -20,6 +20,10 @@ ConflictRelation: TypeAlias = tuple[TransformType, TransformType]
 __all__ = ["TransformRelations"]
 
 
+# Optional transforms contribute their relations from their own modules. For
+# example, DistMoeTransform declares conflicts there because importing it here
+# would make the optional dist_moe package a dependency of the transform API.
+
 # Each pair is (before, after).
 _BUILTIN_PRECEDES: tuple[PrecedenceRelation, ...] = (
     # LoRA freezes configs by creating dynamic subclasses. Context parallelism
